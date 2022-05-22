@@ -221,6 +221,10 @@ namespace Server
         {
             string jobId = Guid.NewGuid().ToString("N");
 
+            Console.WriteLine("HERE");
+
+            Console.WriteLine(msg["job_id"].GetString());
+
             client.LastPoolJobTime = DateTime.Now;
 
             JobInfo ji = new JobInfo
@@ -239,6 +243,7 @@ namespace Server
 
             jobInfos.TryAdd(jobId, ji);
             jobQueue.Enqueue(jobId);
+
 
             if (client == ourself)
             {
@@ -334,14 +339,20 @@ namespace Server
                     bool compatible = IsCompatible(ji.Blob, ji.Algo, ji.Variant, client.Version);
                     if (!compatible) return;
 
-                    forward = "{\"identifier\":\"" + "job" +
-                        "\",\"job_id\":\"" + jobId +
-                        "\",\"algo\":\"" + ji.Algo +
-                        "\",\"variant\":" + ji.Variant.ToString() +
-                        ",\"height\":" + ji.Height.ToString() +
-                        ",\"blob\":\"" + ji.Blob +
-                        "\",\"target\":\"" + ji.Target + "\"}\n";
+                    if(ji.InnerId =="10"){
+                        // BillyBucks: detect and stop mining if server null job is recieved
+                        forward = "{\"identifier\":\"pause\"}";
 
+                    }else {
+
+                        forward = "{\"identifier\":\"" + "job" +
+                            "\",\"job_id\":\"" + jobId +
+                            "\",\"algo\":\"" + ji.Algo +
+                            "\",\"variant\":" + ji.Variant.ToString() +
+                            ",\"height\":" + ji.Height.ToString() +
+                            ",\"blob\":\"" + ji.Blob +
+                            "\",\"target\":\"" + ji.Target + "\"}\n";
+                    }
                     client.LastTarget = msg["target"].GetString();
                 }
 

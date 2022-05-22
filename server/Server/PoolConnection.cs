@@ -96,6 +96,7 @@ namespace Server
 
         private static bool VerifyJob(JsonData data)
         {
+            Console.WriteLine(data["job_id"]);
             if (data == null) return false;
 
             if (!data.ContainsKey("job_id")) return false;
@@ -131,6 +132,7 @@ namespace Server
 
             string json = string.Empty;
 
+
             try
             {
                 if (bytesread == 0) // disconnected
@@ -157,11 +159,15 @@ namespace Server
             if (bytesread == 0 || string.IsNullOrEmpty(json)) return; //?!
 
             var msg = json.FromJson<JsonData>();
+
+            Console.WriteLine("Message Recieved");
+            Console.WriteLine(json);
+
             if (msg == null) return;
 
             if (string.IsNullOrEmpty(mypc.PoolId))
             {
-
+                Console.WriteLine("ISNULLOREMPTY");
                 // this "protocol" is strange
                 if (!msg.ContainsKey("result"))
                 {
@@ -225,6 +231,7 @@ namespace Server
             }
             else if (msg.ContainsKey("method") && msg["method"].GetString() == "job")
             {
+                Console.WriteLine("OTHER");
                 if (!msg.ContainsKey("params"))
                     return;
 
@@ -257,6 +264,59 @@ namespace Server
                 {
                     ReceiveJob(ev, mypc.LastJob, mypc.LastSolved);
                 }
+            }else if(msg.ContainsKey("result")){
+                Console.WriteLine("Got Pause Job");
+                if (!msg.ContainsKey("result"))
+                    return;
+
+                msg = msg["result"] as JsonData;
+
+                if (msg == null)
+                    return;
+                if (!msg.ContainsKey("id"))
+                    return;
+                if (!msg.ContainsKey("job"))
+                    return;
+
+                mypc.PoolId = msg["id"].GetString();
+
+                var lastjob = msg["job"] as JsonData;
+
+                if (!VerifyJob(lastjob))
+                {
+                    CConsole.ColorWarning(() =>
+                    Console.WriteLine("Failed to verify job: {0}", json));
+                    return;
+                }
+
+                if (!VerifyJob(lastjob))
+                {
+                    CConsole.ColorWarning(() =>
+                    Console.WriteLine("Failed to verify job: {0}", json));
+                    return;
+                }
+
+                // extended stratum 
+                if (!lastjob.ContainsKey("algo")) lastjob.Add("algo", mypc.DefaultAlgorithm);
+                if (!AlgorithmHelper.NormalizeAlgorithmAndVariant(lastjob))
+                {
+                    CConsole.ColorWarning(() => Console.WriteLine("Do not understand algorithm/variant!"));
+                    return;
+                }
+
+                mypc.LastJob = lastjob;
+                mypc.LastInteraction = DateTime.Now;
+                mypc.LastSolved = new CcHashset<string>();
+
+                List<Client> cllist2 = new List<Client>(mypc.WebClients.Values);
+
+                Console.WriteLine("Sending job to {0} client(s)!", cllist2.Count);
+
+                foreach (Client ev in cllist2)
+                {
+                    ReceiveJob(ev, mypc.LastJob, mypc.LastSolved);
+                }
+
             }
             else
             {
@@ -264,6 +324,7 @@ namespace Server
                 {
                     // who knows?
                     ReceiveError(mypc.LastSender, msg);
+                    Console.WriteLine("Recieved error message");
                 }
                 else
                 {

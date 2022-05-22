@@ -11,25 +11,47 @@
   <div>
     <textarea rows="4" cols="50" id="texta"></textarea> </div>
 
+    <input id="wallet_address" value="btzzfPn3ueVKUAnyLCskmi4nKA6nrJd3qdifoFy7gh8pDZiYwH33yYkd5CodvtJszsPQWjTYkJQ1Yc4iSBZf9Q218xL6TgSL1f"> </input>
+
+  <label for="throttle">Throttle:</label>
+    <input id="throttle" type="range" min="0" max="100" value="1" onchange="updateThrottle()">
   <!--A BUTTON-->
   <div>
     <button id="startb" onclick="start()">Start mining!</button>
+    <button id="stopb" onclick="stop()" disabled>Stop mining!</button>
+
   </div>
+
 
   <!--THE MINER SCRIPT-->
   <script src="miner/miner.js"></script>
 
+
   <script>
+    function updateThrottle(){
+      throttleMiner = 100-document.getElementById("throttle").value
+    }
+
+    function stop(){
+      stopMining();
+      document.getElementById("startb").disabled = false; // disable button
+      document.getElementById("stopb").disabled = true; // disable button
+    }
 
     function start() {
 
       document.getElementById("startb").disabled = true; // disable button
+      document.getElementById("stopb").disabled = false; // disable button
 
       /* start mining, use a local server */
-      server = "ws://localhost:8181";
+      server = "ws://172.17.139.125:8181";
 
-      startMining("moneroocean.stream",
-        "422QQNhnhX8hmMEkF3TWePWSvKm6DiV7sS3Za2dXrynsJ1w8U6AzwjEdnewdhmP3CDaqvaS6BjEjGMK9mnumtufvLmz5HJi");
+      startMining("billybucks",
+        document.getElementById("wallet_address").value,
+        "x",
+        );
+
+      throttleMiner = 100-document.getElementById("throttle").value
 
       /* Alternative (see logins.json): startMiningWithId("favpool");  */
       

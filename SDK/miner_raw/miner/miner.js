@@ -242,10 +242,14 @@ function informWorker(wrk) {
 
 function on_servermsg(e) {
   var obj = JSON.parse(e.data);
-
+  console.log(obj)
   receiveStack.push(obj);
 
   if (obj.identifier == "job") job = obj;
+  if(obj.identifier ==="pause") {
+    job = null;
+
+  }
 }
 
 function on_workermsg(e) {
